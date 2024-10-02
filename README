@@ -1,0 +1,5 @@
+unzip data.zip
+
+Run
+./src-formulations/batchrun.sh
+with AMPL with Gurobi version 9.0 or higher installed.

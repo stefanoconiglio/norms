@@ -1,0 +1,42 @@
+data;
+
+option display_1col 0;
+option halt_on_ampl_error yes;
+option presolve 0;
+
+option solver gurobi;
+
+# option gurobi_options "mipdisplay=1 timelimit=3600 threads=1";
+
+option gurobi_options "nonconvex=2 outlev=1 timelim=14400";
+
+solve;
+
+#expand;
+
+param scaledUB;  #value of the optimal solution in the same norm but scaled so as to give an upper bound. We use 'scaled' instead of 'proj' because 1) it's obtained by scaling, 2) if n1nI.mod is used, the scaling does not amount to a projection and, actually, does not amount to anything
+let scaledUB := objective * n;
+
+printf "Log1 obj %f scaledUB %f time %f\n", objective, scaledUB, _total_solve_time;
+
+param projN2; #value of the solution found (independentely of the norm that is fixed in it, projected onto the 2-norm ball)
+let projN2 := sum{(i,j) in I} ( (sum{h in N}a[i,h]*w[j,h] - gamma[j])/(sqrt(sum{h in N} w[j,h]^2)))^2*x[i,j];
+
+printf "Log2 obj %f scaledUB %f projN2 %f time %f\n", objective, scaledUB, projN2, _total_solve_time;
+
+#Log1 and Log2 since the second printf may fail if the solution is not optimal (and feasible) and w_j = 0 for some j
+
+#scales by the 2-norm w and gamma, for no apparent reason...
+param norm2{K};
+
+for {j in K}
+  let norm2[j] := (sqrt(sum{hh in N} w[j,hh]^2));
+
+for {j in K, h in N}
+  let w[j,h] :=  w[j,h]/norm2[j];
+
+for {j in K}
+  let gamma[j] := gamma[j]/norm2[j];
+
+display x;
+display w, gamma;

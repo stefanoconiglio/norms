@@ -1,0 +1,3 @@
+data;
+
+write gcouenne; #mandatory heading 'g' for .nl output
